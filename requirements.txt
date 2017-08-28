@@ -1,0 +1,39 @@
+Account Management
+senior
+	- name
+	- username
+	- pasword
+	- phone
+	- bday
+	- gender
+	- address
+	- emergency contact
+		- name
+		- phone
+		- address
+		- email
+care giver
+	- name
+	- phone
+	- address
+	- email
+
+	- general information of a senior
+		- bday
+		- gender
+		- address
+		- phone
+	
+ text messaging reminder
+	- appointment (type of appointment) date , time,  time to remind)
+	- medicine (type of medicine) amount, frequency(monthly, weekly, daily(once, twice, more))
+	- mood check
+	- other
+
+Data Saving
+
+emergency call(optional)
+	-medication
+	-
+
+
