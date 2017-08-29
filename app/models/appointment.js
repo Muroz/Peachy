@@ -12,14 +12,16 @@ const AppointmentSchema = new mongoose.Schema({
   notification: Number,
   timeZone: String,
   time: {type: Date, index: true},
+  type: String,
+  amount: String,
+  medName: String,
+  action: String
 });
 
 AppointmentSchema.methods.requiresNotification = function(date) {
     console.log(Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
                           .diff(moment(date).utc())
                         ).asMinutes()));
-    console.log('now');
-    console.log(this.notification);
   return Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
                           .diff(moment(date).utc())
                         ).asMinutes()) === this.notification;
@@ -55,10 +57,10 @@ AppointmentSchema.statics.sendNotifications = function(callback) {
                 to: `+ ${appointment.phoneNumber}`,
                 from: cfg.twilioPhoneNumber,
                 /* eslint-disable max-len */
-                body: `Hi ${appointment.name}. Just a reminder that you have an appointment coming up.`,
+                // body: `Hi ${appointment.name}. Just a reminder that you have an appointment coming up.`,
+                body: `Good morning ${appointment.name}. Hope you had a great sleep! You need to take ${appointment.amount} of ${appointment.medName}. Please reply with the corresponding number before to confirm: (1) I have taken my medication (2) I am not taking it yet, please send another alert (3) I am not taking my medication`,
                 /* eslint-enable max-len */
             };
-            console.log('here');
             // Send the message!
             client.messages.create(options, function(err, response) {
                 if (err) {
@@ -66,7 +68,6 @@ AppointmentSchema.statics.sendNotifications = function(callback) {
                     console.error(err);
                 } else {
                     // Log the last few digits of a phone number
-                    console.log("this is working");
                     let masked = appointment.phoneNumber.substr(0,
                         appointment.phoneNumber.length - 5);
                     masked += '*****';

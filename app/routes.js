@@ -188,14 +188,23 @@ module.exports = function(app, passport) {
                                   time: ''})});
     });
 
-    // POST: /appointments
-    app.post('/', function(req, res, next) {
-        const name = req.user.username;
-        const phoneNumber = '+17097692806';
-        const notification = 1;
-        const username = req.user.username;
-        const timeZone = 'Canada/Newfoundland';
-        const time = moment();
+    // app.post('/sms', function(req,res,next){
+
+    // })
+    app.post('/createAppointment', isLoggedIn, function(req, res, next){
+        const client = new Twilio(cfg.twilioAccountSid, cfg.twilioAuthToken);
+        const name = req.user.name;
+        const phoneNumber = `+1${req.user.phone}`;
+        const notification = req.body.notification;
+        const username = req.user._id;
+        const timeZone = momentTimeZone.tz.guess();
+
+        const date = req.body.datepick;
+        const timeReminder = req.body.timepick;
+        const time = moment(date + " " + timeReminder);
+
+        const med = req.body.med;
+        const amount = req.body.amount;
         //moment(req.body.time, 'MM-DD-YYYY hh:mma');
 
         const appointment = new Appointment({name: name,
@@ -203,12 +212,18 @@ module.exports = function(app, passport) {
                                             username : username,
                                             notification: notification,
                                             timeZone: timeZone,
-                                            time: time});
-        console.log("saving");
+                                            time: time,
+                                            medName: med,
+                                            amount: amount});
+
         appointment.save()
             .then(function() {
-                res.redirect('/');
+                res.redirect('/profile');
             });
+    });
+
+    // POST: /appointments
+    app.post('/', function(req, res, next) {
     });
 
     // GET: /appointments/:id/edit
@@ -288,25 +303,7 @@ module.exports = function(app, passport) {
     // we will want this protected so you have to be logged in to visit
     // we will use route middleware to verify this (the isLoggedIn function)
     app.get('/profile', isLoggedIn, function(req, res) {
-        // const name = "lul";
-        // const phoneNumber = '+17097692806';
-        // const notification = -5;
-        // const username = req.user._id;
-        // const timeZone = momentTimeZone.tz.guess();
-        // const time = moment();
-        // //moment(req.body.time, 'MM-DD-YYYY hh:mma');
 
-        // const appointment = new Appointment({name: name,
-        //                                     phoneNumber: phoneNumber,
-        //                                     username : username,
-        //                                     notification: notification,
-        //                                     timeZone: timeZone,
-        //                                     time: time});
-        // appointment.save()
-        //     .then(function() {
-        //         res.redirect('/');
-        //     });
-        console.log(req.user);
         res.render('profile.ejs', {
             user : req.user // get the user out of session and pass to template
         });
@@ -356,9 +353,10 @@ module.exports = function(app, passport) {
                 console.log(`Message sent to ${masked}`);
            }
         });
-        res.render('profile.ejs', {
-            user : req.user // get the user out of session and pass to template
-        });
+        // res.render('profile.ejs', {
+        //     user : req.user // get the user out of session and pass to template
+        // });
+        res.redirect('/profile');
     });
 
      // process the signup form
