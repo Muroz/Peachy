@@ -15,14 +15,23 @@ const AppointmentSchema = new mongoose.Schema({
   type: String,
   amount: String,
   medName: String,
-  action: String
+  action: String,
+  reply:  { type:  Boolean, default: false }
 });
 
 AppointmentSchema.methods.requiresNotification = function(date) {
-    console.log(Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
+    let difference = (Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
                           .diff(moment(date).utc())
                         ).asMinutes()));
-  return Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
+
+    if (difference - this.notification == -5 && !this.reply && difference > 0){
+        this.notification = this.notification - 5;
+        this.save().then(function() {
+            console.log('resending a notification');
+        });
+    }
+  
+    return Math.round(moment.duration(moment(this.time).tz(this.timeZone).utc()
                           .diff(moment(date).utc())
                         ).asMinutes()) === this.notification;
 };
@@ -73,7 +82,7 @@ AppointmentSchema.statics.sendNotifications = function(callback) {
                     masked += '*****';
                     console.log(`Message sent to ${masked}`);
                 }
-            });
+            }).then((message) => console.log(message));
         });
 
         // Don't wait on success/failure, just indicate all messages have been

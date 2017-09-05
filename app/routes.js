@@ -7,6 +7,8 @@ module.exports = function(app, passport) {
     const cfg = require('../config/twilio');
     const Twilio = require('twilio');
 
+    var Users = require('./models/user');
+
     momentTimeZone.tz.add({
 		"version": "2017b",
 		"zones": [
@@ -188,13 +190,60 @@ module.exports = function(app, passport) {
                                   time: ''})});
     });
 
-    // app.post('/sms', function(req,res,next){
+    app.post('/sms', function(req,res,next){
+        //console.log(req.body);
 
-    // })
+        const phone = req.body.From;
+
+        Users.findOne({'phone': phone}, function(err, user){
+            if (err){
+                console.log(err);
+            }
+            else{
+                Appointment.find({'username':user._id}, function(err,appointments){
+                    if(err){
+                        console.log(err);
+                    }
+                    else{
+                        var distance = 999999;
+                        var index;
+                        var i;
+                        for (i = 0; i< appointments.length; i++){
+                            if (!appointments[i].reply){
+                                let today = moment(appointments[i].time);
+                                let rightNow = moment();
+                                if (today.isSame(rightNow,'day')){
+                                    let newDistance = Math.round(moment.duration(moment(appointments[i].time).tz(appointments[i].timeZone).utc().diff(moment().utc())));
+                                    if (newDistance<distance){
+                                        console.log(index);
+                                        console.log('index changed');
+                                        index = i;
+                                    }
+                                }
+                            }
+                        }
+                        if (index != null){
+                            var appointment = appointments[index]
+                            appointment.reply = true;
+                            console.log("saving"); 
+                            appointment.save()
+                                .then(function() {
+                                    console.log('appointment modified');
+                                });
+                        };
+                        }
+
+                    }
+                )}
+            }
+        )
+    });
+
+
     app.post('/createAppointment', isLoggedIn, function(req, res, next){
         const client = new Twilio(cfg.twilioAccountSid, cfg.twilioAuthToken);
         const name = req.user.name;
-        const phoneNumber = `+1${req.user.phone}`;
+        const phoneNumber = req.user.phone;
         const notification = req.body.notification;
         const username = req.user._id;
         const timeZone = momentTimeZone.tz.guess();
@@ -334,7 +383,7 @@ module.exports = function(app, passport) {
                                             timeZone: timeZone,
                                             time: time});
        const options = {
-                to: `+1${appointment.phoneNumber}`,
+                to: `${appointment.phoneNumber}`,
                 from: cfg.twilioPhoneNumber,
                 /* eslint-disable max-len */
                 body: `Hi ${appointment.name}. Welcome to peachy`,
